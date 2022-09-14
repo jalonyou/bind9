@@ -323,7 +323,7 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 
 	dns_fixedname_init(&name);
 	CHECK(dns_db_addrdataset(sampledb->rbtdb, node, version, now, rdataset,
-				 options, addedrdataset));
+				 options, addedrdataset, NULL));
 	if (rdataset->type == dns_rdatatype_a ||
 	    rdataset->type == dns_rdatatype_aaaa) {
 		CHECK(sample_name_fromnode(node, dns_fixedname_name(&name)));
@@ -616,7 +616,7 @@ add_soa(dns_db_t *db, dns_dbversion_t *version, const dns_name_t *name,
 	ISC_LIST_APPEND(rdatalist.rdata, &rdata, link);
 	CHECK(dns_rdatalist_tordataset(&rdatalist, &rdataset));
 	CHECK(dns_db_findnode(db, name, true, &node));
-	CHECK(dns_db_addrdataset(db, node, version, 0, &rdataset, 0, NULL));
+	CHECK(dns_db_addrdataset(db, node, version, 0, &rdataset, 0, NULL, NULL));
 cleanup:
 	if (node != NULL) {
 		dns_db_detachnode(db, &node);
@@ -654,7 +654,7 @@ add_ns(dns_db_t *db, dns_dbversion_t *version, const dns_name_t *name,
 	ISC_LIST_APPEND(rdatalist.rdata, &rdata, link);
 	CHECK(dns_rdatalist_tordataset(&rdatalist, &rdataset));
 	CHECK(dns_db_findnode(db, name, true, &node));
-	CHECK(dns_db_addrdataset(db, node, version, 0, &rdataset, 0, NULL));
+	CHECK(dns_db_addrdataset(db, node, version, 0, &rdataset, 0, NULL, NULL));
 cleanup:
 	if (node != NULL) {
 		dns_db_detachnode(db, &node);
@@ -690,7 +690,7 @@ add_a(dns_db_t *db, dns_dbversion_t *version, const dns_name_t *name,
 	ISC_LIST_APPEND(rdatalist.rdata, &rdata, link);
 	CHECK(dns_rdatalist_tordataset(&rdatalist, &rdataset));
 	CHECK(dns_db_findnode(db, name, true, &node));
-	CHECK(dns_db_addrdataset(db, node, version, 0, &rdataset, 0, NULL));
+	CHECK(dns_db_addrdataset(db, node, version, 0, &rdataset, 0, NULL, NULL));
 cleanup:
 	if (node != NULL) {
 		dns_db_detachnode(db, &node);

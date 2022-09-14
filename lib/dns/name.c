@@ -32,6 +32,7 @@
 #include <dns/compress.h>
 #include <dns/fixedname.h>
 #include <dns/name.h>
+#include <dns/ecs.h>
 
 #define VALID_NAME(n) ISC_MAGIC_VALID(n, DNS_NAME_MAGIC)
 
@@ -483,6 +484,32 @@ dns_name_fullhash(const dns_name_t *name, bool case_sensitive) {
 
 	/* High bits are more random. */
 	return (isc_hash32(name->ndata, name->length, case_sensitive));
+}
+
+unsigned int
+dns_name_ecs_fullhash(const dns_name_t *name, const dns_ecs_t *ecs, bool case_sensitive) {
+	/*
+	 * Provide a hash value for 'name'.
+	 */
+	REQUIRE(VALID_NAME(name));
+
+	if (name->labels == 0) {
+		return (0);
+	}
+
+	dns_ecs_t tecs;
+	dns_ecs_init(&tecs);
+	if (ecs != NULL) {
+		tecs = *ecs;
+	}
+
+	char dnsName = (char)*name->ndata;
+	char ecsbuf[DNS_ECS_FORMATSIZE + sizeof(dnsName)] = { 0 };
+	strlcpy(ecsbuf, &dnsName, sizeof(ecsbuf));
+	dns_ecs_format(&tecs, ecsbuf + sizeof(dnsName), DNS_ECS_FORMATSIZE);
+
+	/* High bits are more random. */
+	return (isc_hash32(&ecsbuf, sizeof(ecsbuf), case_sensitive));
 }
 
 dns_namereln_t

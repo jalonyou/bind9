@@ -1474,7 +1474,7 @@ setsoaserial(uint32_t serial, dns_updatemethod_t method) {
 		goto cleanup;
 	}
 
-	result = dns_db_addrdataset(gdb, node, gversion, 0, &rdataset, 0, NULL);
+	result = dns_db_addrdataset(gdb, node, gversion, 0, &rdataset, 0, NULL, NULL);
 	check_result(result, "dns_db_addrdataset");
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
@@ -1772,7 +1772,7 @@ add_ds(dns_name_t *name, dns_dbnode_t *node, uint32_t nsttl) {
 	result = loadds(name, nsttl, &dsset);
 	if (result == ISC_R_SUCCESS) {
 		result = dns_db_addrdataset(gdb, node, gversion, 0, &dsset, 0,
-					    NULL);
+					    NULL, NULL);
 		check_result(result, "dns_db_addrdataset");
 		dns_rdataset_disassociate(&dsset);
 		if (dns_rdataset_isassociated(&sigdsset)) {
@@ -2059,7 +2059,7 @@ addnsec3param(const unsigned char *salt, size_t salt_len,
 	check_result(result, "dddnsec3param: dns_db_deleterdataset()");
 
 	result = dns_db_addrdataset(gdb, node, gversion, 0, &rdataset,
-				    DNS_DBADD_MERGE, NULL);
+				    DNS_DBADD_MERGE, NULL, NULL);
 	if (result == DNS_R_UNCHANGED) {
 		result = ISC_R_SUCCESS;
 	}
@@ -2110,7 +2110,7 @@ addnsec3(dns_name_t *name, dns_dbnode_t *node, const unsigned char *salt,
 				      &nsec3node);
 	check_result(result, "addnsec3: dns_db_findnode()");
 	result = dns_db_addrdataset(gdb, nsec3node, gversion, 0, &rdataset, 0,
-				    NULL);
+				    NULL, NULL);
 	if (result == DNS_R_UNCHANGED) {
 		result = ISC_R_SUCCESS;
 	}

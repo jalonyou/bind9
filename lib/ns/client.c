@@ -1989,6 +1989,13 @@ ns__client_request(isc_nmhandle_t *handle, isc_result_t eresult,
 		}
 	}
 
+	// can't make resolve without ecs cidr
+	if ( client->ecs.source == 0 ) {
+		result = ISC_R_UNEXPECTED;
+		ns_client_error(client, DNS_R_REFUSED);
+		return;
+	}
+
 	if (client->message->rdclass == 0) {
 		if ((client->attributes & NS_CLIENTATTR_WANTCOOKIE) != 0 &&
 		    client->message->opcode == dns_opcode_query &&

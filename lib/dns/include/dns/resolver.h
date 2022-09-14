@@ -73,6 +73,7 @@ typedef struct dns_fetchevent {
 	dns_rdatatype_t	      qtype;
 	dns_db_t	     *db;
 	dns_dbnode_t	     *node;
+	dns_ecs_t            *ecs;
 	dns_rdataset_t	     *rdataset;
 	dns_rdataset_t	     *sigrdataset;
 	dns_fixedname_t	      fname;
@@ -293,7 +294,7 @@ dns_resolver_createfetch(dns_resolver_t *res, const dns_name_t *name,
 			 const isc_sockaddr_t *client, dns_messageid_t id,
 			 unsigned int options, unsigned int depth,
 			 isc_counter_t *qc, isc_task_t *task,
-			 isc_taskaction_t action, void *arg,
+			 isc_taskaction_t action, void *arg, dns_ecs_t *ecs,
 			 dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
 			 dns_fetch_t **fetchp);
 /*%<

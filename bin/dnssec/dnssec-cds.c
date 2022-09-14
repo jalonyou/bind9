@@ -977,7 +977,7 @@ update_diff(const char *cmd, uint32_t ttl, dns_rdataset_t *addset,
 	dns_rdataset_init(&diffset);
 
 	result = dns_db_addrdataset(db, node, ver, 0, addset, DNS_DBADD_MERGE,
-				    NULL);
+				    NULL, NULL);
 	check_result(result, "dns_db_addrdataset()");
 
 	result = dns_db_subtractrdataset(db, node, ver, delset, 0, &diffset);

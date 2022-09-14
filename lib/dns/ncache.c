@@ -281,7 +281,7 @@ addoptout(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 	}
 
 	return (dns_db_addrdataset(cache, node, NULL, now, &ncrdataset, 0,
-				   addedrdataset));
+				   addedrdataset, NULL));
 }
 
 isc_result_t

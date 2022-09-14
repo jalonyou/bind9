@@ -125,7 +125,8 @@ typedef struct dns_dbmethods {
 				    dns_dbversion_t *version, isc_stdtime_t now,
 				    dns_rdataset_t *rdataset,
 				    unsigned int    options,
-				    dns_rdataset_t *addedrdataset);
+				    dns_rdataset_t *addedrdataset,
+				    dns_ecs_t *ecs);
 	isc_result_t (*subtractrdataset)(dns_db_t *db, dns_dbnode_t *node,
 					 dns_dbversion_t *version,
 					 dns_rdataset_t	 *rdataset,
@@ -1195,7 +1196,7 @@ dns_db_allrdatasets(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 isc_result_t
 dns_db_addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 		   isc_stdtime_t now, dns_rdataset_t *rdataset,
-		   unsigned int options, dns_rdataset_t *addedrdataset);
+		   unsigned int options, dns_rdataset_t *addedrdataset, dns_ecs_t *ecs);
 /*%<
  * Add 'rdataset' to 'node' in version 'version' of 'db'.
  *

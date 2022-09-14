@@ -82,6 +82,7 @@
 typedef uint32_t rbtdb_serial_t;
 typedef uint32_t rbtdb_rdatatype_t;
 
+#define ANSWER(r)     (((r)->attributes & DNS_RDATASETATTR_ANSWER) != 0)
 #define RBTDB_RDATATYPE_BASE(type) ((dns_rdatatype_t)((type)&0xFFFF))
 #define RBTDB_RDATATYPE_EXT(type)  ((dns_rdatatype_t)((type) >> 16))
 #define RBTDB_RDATATYPE_VALUE(base, ext)              \
@@ -170,6 +171,7 @@ typedef struct rdatasetheader {
 	 */
 	rbtdb_serial_t serial;
 	dns_ttl_t rdh_ttl;
+	dns_ecs_t *ecs;
 	rbtdb_rdatatype_t type;
 	atomic_uint_least16_t attributes;
 	dns_trust_t trust;
@@ -6727,7 +6729,7 @@ static dns_dbmethods_t zone_methods;
 static isc_result_t
 addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	    isc_stdtime_t now, dns_rdataset_t *rdataset, unsigned int options,
-	    dns_rdataset_t *addedrdataset) {
+	    dns_rdataset_t *addedrdataset, dns_ecs_t *ecs) {
 	dns_rbtdb_t *rbtdb = (dns_rbtdb_t *)db;
 	dns_rbtnode_t *rbtnode = (dns_rbtnode_t *)node;
 	rbtdb_version_t *rbtversion = version;
@@ -6939,8 +6941,43 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	}
 
 	if (result == ISC_R_SUCCESS) {
-		result = add32(rbtdb, rbtnode, name, rbtversion, newheader,
-			       options, false, addedrdataset, now);
+		char ecsbuf[DNS_ECS_FORMATSIZE + sizeof(" [ECS ]") - 1] = { 0 };
+		strlcpy(ecsbuf, " [ECS ", sizeof(ecsbuf));
+		if (ecs != NULL) {
+			dns_ecs_format(ecs, ecsbuf + 6, sizeof(ecsbuf) - 6);
+		}
+		strlcat(ecsbuf, "]", sizeof(ecsbuf));
+
+		const char *p="_.";
+		char namebuf[DNS_NAME_FORMATSIZE];
+		char typebuf[DNS_RDATATYPE_FORMATSIZE];
+		dns_name_format(name, namebuf, sizeof(namebuf));
+		dns_rdatatype_format(newheader->type, typebuf, sizeof(typebuf));
+		if (IS_CACHE(rbtdb) && ANSWER(rdataset) && ecs != NULL && ecs->scope != 0
+		    && (newheader->type == dns_rdatatype_aaaa || newheader->type == dns_rdatatype_a)
+		    && strncmp(namebuf, p, sizeof(*p)) != 0 ) {
+			newheader->ecs = ecs;
+			if (addedrdataset != NULL) {
+				bind_rdataset(rbtdb, rbtnode, newheader, now,
+					      isc_rwlocktype_write,
+					      addedrdataset);
+			}
+			// free_rdataset(rbtdb, rbtdb->common.mctx, newheader);
+			// result = DNS_R_UNCHANGED;
+			result = ISC_R_SUCCESS;
+
+			isc_log_write(
+				dns_lctx, DNS_LOGCATEGORY_LAME_SERVERS, DNS_LOGMODULE_RESOLVER,
+				ISC_LOG_INFO, "ignore to cache for %s/%s finished, newheader->ecs: %s", namebuf, typebuf, ecsbuf);
+		} else {
+			result = add32(rbtdb, rbtnode, name, rbtversion, newheader,
+				       options, false, addedrdataset, now);
+			if (IS_CACHE(rbtdb)) {
+				isc_log_write(
+					dns_lctx, DNS_LOGCATEGORY_LAME_SERVERS, DNS_LOGMODULE_RESOLVER,
+					ISC_LOG_INFO, "add to cache for %s/%s finished, isAnswer: %d, ecs: %s", namebuf, typebuf, ANSWER(rdataset), ecsbuf);
+			}
+		}
 	}
 	if (result == ISC_R_SUCCESS && delegating) {
 		rbtnode->find_callback = 1;

@@ -11320,7 +11320,7 @@ zone_refreshkeys(dns_zone_t *zone) {
 				DNS_FETCHOPT_NOVALIDATE |
 					DNS_FETCHOPT_UNSHARED |
 					DNS_FETCHOPT_NOCACHED,
-				0, NULL, zone->task, keyfetch_done, kfetch,
+				0, NULL, zone->task, keyfetch_done, kfetch, NULL,
 				&kfetch->dnskeyset, &kfetch->dnskeysigset,
 				&kfetch->fetch);
 			LOCK_ZONE(zone);
@@ -13466,7 +13466,7 @@ stub_glue_response_cb(isc_task_t *task, isc_event_t *event) {
 	}
 
 	result = dns_db_addrdataset(stub->db, node, stub->version, 0,
-				    addr_rdataset, 0, NULL);
+				    addr_rdataset, 0, NULL, NULL);
 	if (result != ISC_R_SUCCESS) {
 		dns_zone_log(zone, ISC_LOG_INFO,
 			     "refreshing stub: "
@@ -13602,7 +13602,7 @@ save_nsrrset(dns_message_t *message, dns_name_t *name,
 	if (result != ISC_R_SUCCESS) {
 		goto done;
 	}
-	result = dns_db_addrdataset(db, node, version, 0, nsrdataset, 0, NULL);
+	result = dns_db_addrdataset(db, node, version, 0, nsrdataset, 0, NULL, NULL);
 	dns_db_detachnode(db, &node);
 	if (result != ISC_R_SUCCESS) {
 		goto done;
@@ -13633,7 +13633,7 @@ save_nsrrset(dns_message_t *message, dns_name_t *name,
 				goto done;
 			}
 			result = dns_db_addrdataset(db, node, version, 0,
-						    rdataset, 0, NULL);
+						    rdataset, 0, NULL, NULL);
 			dns_db_detachnode(db, &node);
 			if (result != ISC_R_SUCCESS) {
 				goto done;
@@ -13651,7 +13651,7 @@ save_nsrrset(dns_message_t *message, dns_name_t *name,
 				goto done;
 			}
 			result = dns_db_addrdataset(db, node, version, 0,
-						    rdataset, 0, NULL);
+						    rdataset, 0, NULL, NULL);
 			dns_db_detachnode(db, &node);
 			if (result != ISC_R_SUCCESS) {
 				goto done;
@@ -14937,7 +14937,7 @@ ns_query(dns_zone_t *zone, dns_rdataset_t *soardataset, dns_stub_t *stub) {
 		}
 
 		result = dns_db_addrdataset(stub->db, node, stub->version, 0,
-					    soardataset, 0, NULL);
+					    soardataset, 0, NULL, NULL);
 		dns_db_detachnode(stub->db, &node);
 		if (result != ISC_R_SUCCESS) {
 			dns_zone_log(zone, ISC_LOG_INFO,
@@ -16946,7 +16946,7 @@ checkandaddsoa(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 
 	if (isc_serial_gt(soa.serial, oldserial)) {
 		return (dns_db_addrdataset(db, node, version, 0, rdataset, 0,
-					   NULL));
+					   NULL, NULL));
 	}
 	/*
 	 * Always bump the serial.
@@ -16981,7 +16981,7 @@ checkandaddsoa(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	dns_rdataset_getownercase(rdataset, name);
 	dns_rdataset_setownercase(&temprdataset, name);
 	return (dns_db_addrdataset(db, node, version, 0, &temprdataset, 0,
-				   NULL));
+				   NULL, NULL));
 }
 
 /*
@@ -17239,7 +17239,7 @@ copy_non_dnssec_records(dns_zone_t *zone, dns_db_t *db, dns_db_t *version,
 						*oldserial);
 		} else {
 			result = dns_db_addrdataset(db, node, version, 0,
-						    &rdataset, 0, NULL);
+						    &rdataset, 0, NULL, NULL);
 		}
 		dns_rdataset_disassociate(&rdataset);
 		if (result != ISC_R_SUCCESS) {

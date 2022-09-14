@@ -624,7 +624,7 @@ configure_staticstub(const cfg_obj_t *zconfig, dns_zone_t *zone,
 	RUNTIME_CHECK(dns_rdatalist_tordataset(&rdatalist_ns, &rdataset) ==
 		      ISC_R_SUCCESS);
 	CHECK(dns_db_addrdataset(db, apexnode, dbversion, 0, &rdataset, 0,
-				 NULL));
+				 NULL, NULL));
 	dns_rdataset_disassociate(&rdataset);
 
 	/* Add glue A RRset, if any */
@@ -633,7 +633,7 @@ configure_staticstub(const cfg_obj_t *zconfig, dns_zone_t *zone,
 			dns_rdatalist_tordataset(&rdatalist_a, &rdataset) ==
 			ISC_R_SUCCESS);
 		CHECK(dns_db_addrdataset(db, apexnode, dbversion, 0, &rdataset,
-					 0, NULL));
+					 0, NULL, NULL));
 		dns_rdataset_disassociate(&rdataset);
 	}
 
@@ -643,7 +643,7 @@ configure_staticstub(const cfg_obj_t *zconfig, dns_zone_t *zone,
 			dns_rdatalist_tordataset(&rdatalist_aaaa, &rdataset) ==
 			ISC_R_SUCCESS);
 		CHECK(dns_db_addrdataset(db, apexnode, dbversion, 0, &rdataset,
-					 0, NULL));
+					 0, NULL, NULL));
 		dns_rdataset_disassociate(&rdataset);
 	}
 

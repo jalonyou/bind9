@@ -3393,7 +3393,7 @@ add_soa(dns_db_t *db, dns_dbversion_t *version, const dns_name_t *name,
 	dns_rdataset_init(&rdataset);
 	CHECK(dns_rdatalist_tordataset(&rdatalist, &rdataset));
 	CHECK(dns_db_findnode(db, name, true, &node));
-	CHECK(dns_db_addrdataset(db, node, version, 0, &rdataset, 0, NULL));
+	CHECK(dns_db_addrdataset(db, node, version, 0, &rdataset, 0, NULL, NULL));
 
 cleanup:
 	if (node != NULL) {
@@ -3433,7 +3433,7 @@ add_ns(dns_db_t *db, dns_dbversion_t *version, const dns_name_t *name,
 	dns_rdataset_init(&rdataset);
 	CHECK(dns_rdatalist_tordataset(&rdatalist, &rdataset));
 	CHECK(dns_db_findnode(db, name, true, &node));
-	CHECK(dns_db_addrdataset(db, node, version, 0, &rdataset, 0, NULL));
+	CHECK(dns_db_addrdataset(db, node, version, 0, &rdataset, 0, NULL, NULL));
 
 cleanup:
 	if (node != NULL) {
@@ -7284,7 +7284,7 @@ tat_send(isc_task_t *task, isc_event_t *event) {
 		result = dns_resolver_createfetch(
 			tat->view->resolver, tatname, dns_rdatatype_null,
 			domain, &nameservers, NULL, NULL, 0, 0, 0, NULL,
-			tat->task, tat_done, tat, &tat->rdataset,
+			tat->task, tat_done, tat, NULL, &tat->rdataset,
 			&tat->sigrdataset, &tat->fetch);
 	}
 

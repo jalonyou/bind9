@@ -2301,9 +2301,9 @@ mark_secure(ns_client_t *client, dns_db_t *db, dns_name_t *name,
 			     client->view->acceptexpired);
 
 	(void)dns_db_addrdataset(db, node, NULL, client->now, rdataset, 0,
-				 NULL);
+				 NULL, NULL);
 	(void)dns_db_addrdataset(db, node, NULL, client->now, sigrdataset, 0,
-				 NULL);
+				 NULL, NULL);
 	dns_db_detachnode(db, &node);
 }
 
@@ -2591,7 +2591,7 @@ query_prefetch(ns_client_t *client, dns_name_t *qname,
 	result = dns_resolver_createfetch(
 		client->view->resolver, qname, rdataset->type, NULL, NULL, NULL,
 		peeraddr, client->message->id, options, 0, NULL, client->task,
-		prefetch_done, client, tmprdataset, NULL,
+		prefetch_done, client, &client->ecs, tmprdataset, NULL,
 		&client->query.prefetch);
 	if (result != ISC_R_SUCCESS) {
 		ns_client_putrdataset(client, &tmprdataset);
@@ -2809,7 +2809,7 @@ query_rpzfetch(ns_client_t *client, dns_name_t *qname, dns_rdatatype_t type) {
 	result = dns_resolver_createfetch(
 		client->view->resolver, qname, type, NULL, NULL, NULL, peeraddr,
 		client->message->id, options, 0, NULL, client->task,
-		prefetch_done, client, tmprdataset, NULL,
+		prefetch_done, client, &client->ecs, tmprdataset, NULL,
 		&client->query.prefetch);
 	if (result != ISC_R_SUCCESS) {
 		ns_client_putrdataset(client, &tmprdataset);
@@ -6503,7 +6503,7 @@ ns_query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
 	result = dns_resolver_createfetch(
 		client->view->resolver, qname, qtype, qdomain, nameservers,
 		NULL, peeraddr, client->message->id, client->query.fetchoptions,
-		0, NULL, client->task, fetch_callback, client, rdataset,
+		0, NULL, client->task, fetch_callback, client, &client->ecs, rdataset,
 		sigrdataset, &client->query.fetch);
 	if (result != ISC_R_SUCCESS) {
 		isc_nmhandle_detach(&client->fetchhandle);

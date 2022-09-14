@@ -362,7 +362,7 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver, bool warn) {
 					  DNS_DBADD_EXACTTTL;
 				result = dns_db_addrdataset(db, node, ver, 0,
 							    &rds, options,
-							    &ardataset);
+							    &ardataset, NULL);
 				break;
 			case DNS_DIFFOP_DEL:
 			case DNS_DIFFOP_DELRESIGN:

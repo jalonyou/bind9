@@ -366,6 +366,9 @@ dns_name_hash(const dns_name_t *name, bool case_sensitive);
  */
 
 unsigned int
+dns_name_ecs_fullhash(const dns_name_t *name, const dns_ecs_t *ecs, bool case_sensitive);
+
+unsigned int
 dns_name_fullhash(const dns_name_t *name, bool case_sensitive);
 /*%<
  * Provide a hash value for 'name'.  Unlike dns_name_hash(), this function
