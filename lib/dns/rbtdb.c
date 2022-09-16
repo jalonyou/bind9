@@ -6953,7 +6953,7 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 		char typebuf[DNS_RDATATYPE_FORMATSIZE];
 		dns_name_format(name, namebuf, sizeof(namebuf));
 		dns_rdatatype_format(newheader->type, typebuf, sizeof(typebuf));
-		if (IS_CACHE(rbtdb) && ANSWER(rdataset) && ecs != NULL && ecs->scope != 0
+		if (IS_CACHE(rbtdb) && ANSWER(rdataset) && ecs != NULL // && ecs->scope != 0
 		    && (newheader->type == dns_rdatatype_aaaa || newheader->type == dns_rdatatype_a)
 		    && strncmp(namebuf, p, sizeof(*p)) != 0 ) {
 			newheader->ecs = ecs;

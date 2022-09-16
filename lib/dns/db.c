@@ -707,9 +707,10 @@ dns_db_addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(dns_rdataset_isassociated(rdataset));
 	REQUIRE(rdataset->rdclass == db->rdclass);
-	REQUIRE(addedrdataset == NULL ||
-		(DNS_RDATASET_VALID(addedrdataset) &&
-		 !dns_rdataset_isassociated(addedrdataset)));
+	REQUIRE(addedrdataset == NULL || DNS_RDATASET_VALID(addedrdataset));
+	if (addedrdataset != NULL && dns_rdataset_isassociated(addedrdataset)) {
+		addedrdataset = NULL;
+	}
 
 	return ((db->methods->addrdataset)(db, node, version, now, rdataset,
 					   options, addedrdataset, ecs));
