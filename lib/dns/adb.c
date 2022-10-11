@@ -3973,7 +3973,9 @@ fetch_callback(isc_task_t *task, isc_event_t *ev) {
 	/*
 	 * We got something potentially useful.
 	 */
-	result = import_rdataset(name, &fetch->rdataset, now);
+	if ((fetch->rdataset.type == dns_rdatatype_a) || (fetch->rdataset.type == dns_rdatatype_aaaa)) {
+		result = import_rdataset(name, &fetch->rdataset, now);
+	}
 
 check_result:
 	if (result == ISC_R_SUCCESS) {
