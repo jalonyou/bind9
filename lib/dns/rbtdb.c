@@ -5021,59 +5021,61 @@ cache_find(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
 			 * If we found a type we were looking for, remember
 			 * it.
 			 */
-			if (header->type == type ||
-			    (type == dns_rdatatype_any &&
-			     RBTDB_RDATATYPE_BASE(header->type) != 0) ||
-			    (cname_ok && header->type == dns_rdatatype_cname))
-			{
-				/*
-				 * We've found the answer.
-				 */
-				found = header;
-				if (header->type == dns_rdatatype_cname &&
-				    cname_ok && cnamesig != NULL) {
+			if (header->ecs == NULL) {
+				if (header->type == type ||
+				    (type == dns_rdatatype_any &&
+				     RBTDB_RDATATYPE_BASE(header->type) != 0) ||
+				    (cname_ok && header->type == dns_rdatatype_cname))
+				{
 					/*
-					 * If we've already got the
-					 * CNAME RRSIG, use it.
+					 * We've found the answer.
 					 */
-					foundsig = cnamesig;
+					found = header;
+					if (header->type == dns_rdatatype_cname &&
+					    cname_ok && cnamesig != NULL) {
+						/*
+						 * If we've already got the
+						 * CNAME RRSIG, use it.
+						 */
+						foundsig = cnamesig;
+					}
+				} else if (header->type == sigtype) {
+					/*
+					 * We've found the RRSIG rdataset for our
+					 * target type.  Remember it.
+					 */
+					foundsig = header;
+				} else if (header->type == RBTDB_RDATATYPE_NCACHEANY ||
+					   header->type == negtype) {
+					/*
+					 * We've found a negative cache entry.
+					 */
+					found = header;
+				} else if (header->type == dns_rdatatype_ns) {
+					/*
+					 * Remember a NS rdataset even if we're
+					 * not specifically looking for it, because
+					 * we might need it later.
+					 */
+					nsheader = header;
+				} else if (header->type == RBTDB_RDATATYPE_SIGNS) {
+					/*
+					 * If we need the NS rdataset, we'll also
+					 * need its signature.
+					 */
+					nssig = header;
+				} else if (header->type == dns_rdatatype_nsec) {
+					nsecheader = header;
+				} else if (header->type == RBTDB_RDATATYPE_SIGNSEC) {
+					nsecsig = header;
+				} else if (cname_ok &&
+					   header->type == RBTDB_RDATATYPE_SIGCNAME) {
+					/*
+					 * If we get a CNAME match, we'll also need
+					 * its signature.
+					 */
+					cnamesig = header;
 				}
-			} else if (header->type == sigtype) {
-				/*
-				 * We've found the RRSIG rdataset for our
-				 * target type.  Remember it.
-				 */
-				foundsig = header;
-			} else if (header->type == RBTDB_RDATATYPE_NCACHEANY ||
-				   header->type == negtype) {
-				/*
-				 * We've found a negative cache entry.
-				 */
-				found = header;
-			} else if (header->type == dns_rdatatype_ns) {
-				/*
-				 * Remember a NS rdataset even if we're
-				 * not specifically looking for it, because
-				 * we might need it later.
-				 */
-				nsheader = header;
-			} else if (header->type == RBTDB_RDATATYPE_SIGNS) {
-				/*
-				 * If we need the NS rdataset, we'll also
-				 * need its signature.
-				 */
-				nssig = header;
-			} else if (header->type == dns_rdatatype_nsec) {
-				nsecheader = header;
-			} else if (header->type == RBTDB_RDATATYPE_SIGNSEC) {
-				nsecsig = header;
-			} else if (cname_ok &&
-				   header->type == RBTDB_RDATATYPE_SIGCNAME) {
-				/*
-				 * If we get a CNAME match, we'll also need
-				 * its signature.
-				 */
-				cnamesig = header;
 			}
 			header_prev = header;
 		} else {
@@ -6209,7 +6211,7 @@ add32(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode, const dns_name_t *nodename,
 				/*
 				 * Found one.
 				 */
-				if (trust < topheader->trust) {
+				if (trust < topheader->trust && newheader->ecs == NULL) {
 					/*
 					 * The NXDOMAIN/NODATA(QTYPE=ANY)
 					 * is more trusted.
@@ -6276,7 +6278,7 @@ find_header:
 		 * policy is here.
 		 */
 		if (rbtversion == NULL && trust < header->trust &&
-		    (ACTIVE(header, now) || header_nx))
+		    (ACTIVE(header, now) || header_nx) && newheader->ecs == NULL)
 		{
 			free_rdataset(rbtdb, rbtdb->common.mctx, newheader);
 			if (addedrdataset != NULL) {
@@ -6290,7 +6292,7 @@ find_header:
 		/*
 		 * Don't merge if a nonexistent rdataset is involved.
 		 */
-		if (merge && (header_nx || newheader_nx)) {
+		if (merge && (header_nx || newheader_nx || newheader->ecs != NULL)) {
 			merge = false;
 		}
 
@@ -6371,7 +6373,8 @@ find_header:
 					 (unsigned char *)newheader,
 					 (unsigned int)(sizeof(*newheader)),
 					 rbtdb->common.rdclass,
-					 (dns_rdatatype_t)header->type))
+					 (dns_rdatatype_t)header->type) &&
+		    newheader->ecs == NULL)
 		{
 			/*
 			 * Honour the new ttl if it is less than the
@@ -6421,7 +6424,8 @@ find_header:
 		    header->trust >= newheader->trust &&
 		    dns_rdataslab_equal((unsigned char *)header,
 					(unsigned char *)newheader,
-					(unsigned int)(sizeof(*newheader))))
+					(unsigned int)(sizeof(*newheader))) &&
+		    newheader->ecs == NULL)
 		{
 			/*
 			 * Honour the new ttl if it is less than the
@@ -6957,27 +6961,28 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 		    && (newheader->type == dns_rdatatype_aaaa || newheader->type == dns_rdatatype_a)
 		    && strncmp(namebuf, p, sizeof(*p)) != 0 ) {
 			newheader->ecs = ecs;
-			if (addedrdataset != NULL) {
-				bind_rdataset(rbtdb, rbtnode, newheader, now,
-					      isc_rwlocktype_write,
-					      addedrdataset);
-			}
+			newheader->rdh_ttl = 1;
+			// if (addedrdataset != NULL) {
+			//	bind_rdataset(rbtdb, rbtnode, newheader, now,
+			//		      isc_rwlocktype_write,
+			//		      addedrdataset);
+			//}
 			// free_rdataset(rbtdb, rbtdb->common.mctx, newheader);
 			// result = DNS_R_UNCHANGED;
-			result = ISC_R_SUCCESS;
+			//result = ISC_R_SUCCESS;
 
 			isc_log_write(
 				dns_lctx, DNS_LOGCATEGORY_LAME_SERVERS, DNS_LOGMODULE_RESOLVER,
 				ISC_LOG_INFO, "ignore to cache for %s/%s finished, newheader->ecs: %s", namebuf, typebuf, ecsbuf);
 		} else {
-			result = add32(rbtdb, rbtnode, name, rbtversion, newheader,
-				       options, false, addedrdataset, now);
 			if (IS_CACHE(rbtdb)) {
 				isc_log_write(
 					dns_lctx, DNS_LOGCATEGORY_LAME_SERVERS, DNS_LOGMODULE_RESOLVER,
 					ISC_LOG_INFO, "add to cache for %s/%s finished, isAnswer: %d, ecs: %s", namebuf, typebuf, ANSWER(rdataset), ecsbuf);
 			}
 		}
+		result = add32(rbtdb, rbtnode, name, rbtversion, newheader,
+			       options, false, addedrdataset, now);
 	}
 	if (result == ISC_R_SUCCESS && delegating) {
 		rbtnode->find_callback = 1;
