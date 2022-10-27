@@ -6960,16 +6960,9 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 		if (IS_CACHE(rbtdb) && ANSWER(rdataset) && ecs != NULL // && ecs->scope != 0
 		    && (newheader->type == dns_rdatatype_aaaa || newheader->type == dns_rdatatype_a)
 		    && strncmp(namebuf, p, sizeof(*p)) != 0 ) {
-			newheader->ecs = ecs;
-			newheader->rdh_ttl = 1;
-			// if (addedrdataset != NULL) {
-			//	bind_rdataset(rbtdb, rbtnode, newheader, now,
-			//		      isc_rwlocktype_write,
-			//		      addedrdataset);
-			//}
-			// free_rdataset(rbtdb, rbtdb->common.mctx, newheader);
-			// result = DNS_R_UNCHANGED;
-			//result = ISC_R_SUCCESS;
+			newheader->ecs = ecs;    // will be ignore by some cache_add and cache_find logic
+			newheader->rdh_ttl = 1;  // will fast expire and be cleaned
+			RDATASET_ATTR_CLR(newheader, RDATASET_ATTR_PREFETCH);    // no need to prefetch
 
 			isc_log_write(
 				dns_lctx, DNS_LOGCATEGORY_LAME_SERVERS, DNS_LOGMODULE_RESOLVER,
